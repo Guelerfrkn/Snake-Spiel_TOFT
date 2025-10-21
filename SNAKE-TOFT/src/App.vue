@@ -1,12 +1,12 @@
 <script setup>
 
-import TheWelcome from './components/TheWelcome.vue'
+import Snake from './components/Snake.vue'
 </script>
 
 <template>
 
   <main>
-    <TheWelcome />
+    <Snake />
   </main>
 </template>
 
