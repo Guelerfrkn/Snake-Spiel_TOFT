@@ -1,7 +1,7 @@
 <template>
   <div class="snake-game" @wheel.prevent>
     <div class="game-container">
-      <h1>🐍 Snake Spiel</h1>
+      <h1>Snake Spiel</h1>
 
       <div class="stats-container">
         <div class="stat-box">
@@ -21,19 +21,15 @@
         <button @click="resetGame" v-if="gameOver" class="btn btn-restart">Neues Spiel</button>
       </div>
 
-      <!-- Der game-board-Container wird als flexibel gestaltet -->
       <div class="game-board-wrapper">
         <div
             class="game-board"
             :style="{
               gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
-              // Höhe und Breite werden relativ zum Viewport berechnet und sollen quadratisch sein
-              // Breite: 90% der verfügbaren Breite
-              // Höhe: Entweder 90% der Breite (für Quadrat) oder 60% der Höhe (wenn Höhe der limitierende Faktor ist)
               height: `min(90vw, 60vh)`,
               width: `min(90vw, 60vh)`,
-              maxWidth: '360px', // Optional: Maximalgröße z.B. für Desktop
-              maxHeight: '360px', // Optional: Maximalgröße z.B. für Desktop
+              maxWidth: '360px',
+              maxHeight: '360px',
             }"
         >
           <div
@@ -79,9 +75,8 @@ export default {
   name: 'SnakeGame',
   data() {
     return {
-      boardSize: 8, // Beispiel: Größe auf 8 verringert
-      // cellSize: 30, // Entfernt: Wird nicht mehr als feste Größe verwendet
-      snake: [3 * 8 + 4], // Anpassung der Startposition für Boardgröße 8
+      boardSize: 8,
+      snake: [3 * 8 + 4],
       direction: 'right',
       nextDirection: 'right',
       food: 0,
@@ -104,13 +99,13 @@ export default {
     document.addEventListener('keydown', this.handleKeyDown);
     document.body.style.overflow = 'hidden';
 
-    // Zoom-Verhinderung: viewport Tag korrigiert
     const meta = document.createElement('meta');
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
     document.head.appendChild(meta);
   },
   beforeUnmount() {
+    document.removeEventListener('keydown', this.handleKeyDown);
     document.body.style.overflow = '';
   },
   methods: {
@@ -138,9 +133,11 @@ export default {
       this.food = pos;
     },
     startGame() {
-      this.gameRunning = true;
-      this.currentSpeed = this.baseSpeed;
-      this.gameLoop();
+      if (!this.gameRunning && !this.gameOver) {
+        this.gameRunning = true;
+        this.currentSpeed = this.baseSpeed;
+        this.gameLoop();
+      }
     },
     pauseGame() {
       this.gameRunning = false;
@@ -150,7 +147,7 @@ export default {
       this.gameLoop();
     },
     resetGame() {
-      this.snake = [3 * 8 + 4]; // Anpassung der Startposition für Boardgröße 8
+      this.snake = [3 * 8 + 4];
       this.direction = 'right';
       this.nextDirection = 'right';
       this.score = 0;
@@ -224,7 +221,6 @@ export default {
       }, this.currentSpeed);
     },
     updateSpeed() {
-      // Beispielhafte Geschwindigkeitsanpassung, kann bei kleinerer Boardgröße schneller werden
       this.currentSpeed = Math.max(this.minSpeed, this.baseSpeed - this.score * 3);
     },
     updateBoard() {
@@ -248,28 +244,35 @@ export default {
         return;
       }
 
+      let newDir = null;
       switch (e.key) {
         case 'ArrowUp':
-          if (this.direction !== 'down') this.nextDirection = 'up';
-          if (!this.gameRunning && !this.gameOver) this.startGame();
+          newDir = 'up';
           break;
         case 'ArrowDown':
-          if (this.direction !== 'up') this.nextDirection = 'down';
-          if (!this.gameRunning && !this.gameOver) this.startGame();
+          newDir = 'down';
           break;
         case 'ArrowLeft':
-          if (this.direction !== 'right') this.nextDirection = 'left';
-          if (!this.gameRunning && !this.gameOver) this.startGame();
+          newDir = 'left';
           break;
         case 'ArrowRight':
-          if (this.direction !== 'left') this.nextDirection = 'right';
-          if (!this.gameRunning && !this.gameOver) this.startGame();
+          newDir = 'right';
           break;
+      }
+
+      if (newDir) {
+        e.preventDefault();
+        this.processDirectionInput(newDir);
       }
     },
     changeDirection(dir) {
+      this.processDirectionInput(dir);
+    },
+    processDirectionInput(dir) {
       if (!this.gameRunning && !this.gameOver) {
+        this.nextDirection = dir;
         this.startGame();
+        return;
       }
 
       if (
@@ -426,15 +429,13 @@ h1 {
 
 .game-board {
   display: grid;
-  grid-gap: 3px; /* Geringfügig reduziert */
+  grid-gap: 3px;
   background-color: #bbada0;
   border-radius: 10px;
   padding: 8px;
   position: relative;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   overflow: hidden;
-  /* Wichtig: Entfernt das aspect-ratio, da Höhe und Breite explizit gesetzt werden */
-  /* aspect-ratio: 1 / 1; -> Entfernt */
 }
 
 .cell {
@@ -445,9 +446,6 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Wichtig für Mobile: Größe ergibt sich aus dem Spielbrett */
-  /* Entfernt: min-width, min-height */
-  /* Zelle soll quadratisch sein, relative Größe */
   aspect-ratio: 1 / 1;
 }
 
@@ -583,8 +581,6 @@ h1 {
   margin: 10px 0;
 }
 
-/* Responsive adjustments */
-/* Responsive adjustments */
 @media (min-width: 769px) {
   .game-container {
     padding: 20px;
@@ -623,12 +619,10 @@ h1 {
   }
 
   .game-board {
-    /* Optional: Größere maximale Größe auf Desktop */
-    max-width: 480px; /* z.B. 16 * 30px */
+    max-width: 480px;
     max-height: 480px;
   }
 
-  /* Hinzugefügt: Verstecke die Steuerung auf Desktop */
   .controls {
     display: none;
   }
@@ -642,7 +636,6 @@ h1 {
   }
 }
 
-/* Die Mobile-Queries (max-width) bleiben unverändert und zeigen die Steuerung standardmäßig an */
 @media (max-width: 768px) {
   .game-container {
     padding: 8px;
@@ -679,10 +672,8 @@ h1 {
     padding: 6px;
   }
 
-  /* Optional: Stellen Sie sicher, dass die Steuerung auf Mobile sichtbar ist (Standardverhalten, falls nicht anders definiert) */
   .controls {
-    /* display: flex; ist bereits die Standard-Eigenschaft in der Haupt-CSS-Regel für .controls */
-    gap: 10px; /* Passt den Abstand an */
+    gap: 10px;
   }
 
   .horizontal-controls {
